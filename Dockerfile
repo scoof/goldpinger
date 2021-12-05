@@ -13,11 +13,14 @@ RUN go mod download
 # Build goldpinger
 
 COPY . ./
-RUN make bin/goldpinger
+RUN make binaries
 
 # Build the asset container, copy over goldpinger
 
 FROM scratch
-COPY --from=builder /w/bin/goldpinger /goldpinger
+
+ARG TARGETARCH
+
+COPY --from=builder /w/bin/goldpinger-${TARGETARCH} /goldpinger
 COPY ./static /static
 ENTRYPOINT ["/goldpinger", "--static-file-path", "/static"]

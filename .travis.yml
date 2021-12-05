@@ -11,7 +11,7 @@ script:
   - docker --version
 
   # build locally and run locally
-  - make clean && make vendor && make && ./bin/goldpinger --help
+  - make clean && make vendor && make && ./bin/goldpinger-amd64 --help
 
   # build an image and run the image
   - make clean && make vendor && make build

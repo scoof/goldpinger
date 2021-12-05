@@ -4,11 +4,16 @@ bin ?= goldpinger
 pkg ?= "github.com/bloomberg/goldpinger"
 tag = $(name):$(version)
 goos ?= ${GOOS}
-namespace ?= "bloomberg/"
+namespace ?= "scoof/"
 files = $(shell find . -iname "*.go")
 
 
-bin/$(bin): $(files)
+binaries: bin/$(bin)-amd64 bin/$(bin)-arm64
+
+bin/$(bin)-arm64: $(files)
+	GOOS=${goos} PKG=${pkg} ARCH=arm64 VERSION=${version} BIN=${bin} ./build/build.sh
+
+bin/$(bin)-amd64: $(files)
 	GOOS=${goos} PKG=${pkg} ARCH=amd64 VERSION=${version} BIN=${bin} ./build/build.sh
 
 clean:
@@ -25,11 +30,14 @@ swagger:
 	swagger generate client -t pkg -f ./swagger.yml -A goldpinger
 
 build-multistage:
-	docker build -t $(tag) -f ./Dockerfile .
+	docker buildx build --platform linux/amd64,linux/arm64 -t $(tag) -f ./Dockerfile .
+	docker buildx build -t $(tag) -f ./Dockerfile --load .
 
 build: GOOS=linux
-build: bin/$(bin)
-	docker build -t $(tag) -f ./build/Dockerfile-simple .
+build: binaries
+	docker buildx build --platform linux/amd64,linux/arm64 -t $(tag) -f ./build/Dockerfile-simple .
+	# TODO: any other way to get image in local registry?
+	docker buildx build -t $(tag) -f ./build/Dockerfile-simple --load .
 
 tag:
 	docker tag $(tag) $(namespace)$(tag)
@@ -45,7 +53,9 @@ version:
 
 
 vendor-build:
-	docker build -t $(tag)-vendor --build-arg TAG=$(tag) -f ./build/Dockerfile-vendor .
+	docker buildx build --platform linux/amd64,linux/arm64 -t $(tag)-vendor --build-arg TAG=$(tag) -f ./build/Dockerfile-vendor .
+	# TODO: any other way to get image in local registry?
+	docker buildx build -t $(tag)-vendor --build-arg TAG=$(tag) -f ./build/Dockerfile-vendor --load .
 
 vendor-tag:
 	docker tag $(tag)-vendor $(namespace)$(tag)-vendor

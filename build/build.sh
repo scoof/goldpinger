@@ -39,5 +39,5 @@ export GOOS=${GOOS:-}
 
 go build \
     -ldflags "-X 'main.Version=${VERSION}' -X 'main.Build=`date`'" \
-    -o ./bin/${BIN} \
+    -o ./bin/${BIN}-${ARCH} \
     ./cmd/${BIN}
